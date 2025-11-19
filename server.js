@@ -5,7 +5,7 @@ const path = require('path');
 const cors = require('cors');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const streamifier = require('streamifier');
 
 const app = express();
 app.use(cors());
@@ -86,15 +86,8 @@ async function initDB() {
 // Викликаємо одразу
 initDB();
 
-// MULTER з CLOUDINARY
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: 'karinka-photos',
-    resource_type: 'auto'
-  }
-});
-const upload = multer({ storage });
+// MULTER - простий upload в пам'ять
+const upload = multer({ storage: multer.memoryStorage() });
 
 // ===== ФОТО =====
 app.get('/api/photos', async (req, res) => {
@@ -108,32 +101,44 @@ app.get('/api/photos', async (req, res) => {
 
 app.post('/api/photos/upload', upload.single('photo'), async (req, res) => {
   try {
-    console.log('File received:', req.file);
-    
     if (!req.file) {
       console.error('No file uploaded');
       return res.status(400).json({ error: 'Файл не завантажено' });
     }
-    
-    const caption = req.body.caption || '';
-    const url = req.file.secure_url;
-    
-    console.log('File info:', {
-      filename: req.file.filename,
-      secure_url: req.file.secure_url,
-      path: req.file.path
-    });
 
-    if (!url) {
-      console.error('secure_url is null! File object:', req.file);
-      return res.status(400).json({ error: 'Cloudinary upload failed - no URL' });
-    }
+    console.log('Uploading to Cloudinary...');
 
-    const result = await pool.query(
-      'INSERT INTO photos(url, caption, created_at) VALUES ($1, $2, NOW()) RETURNING *',
-      [url, caption]
+    // Завантажуємо напряму в Cloudinary
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: 'karinka-photos',
+        resource_type: 'auto'
+      },
+      async (error, result) => {
+        if (error) {
+          console.error('Cloudinary error:', error);
+          return res.status(500).json({ error: 'Cloudinary upload failed: ' + error.message });
+        }
+
+        console.log('Cloudinary upload success:', result.secure_url);
+
+        const caption = req.body.caption || '';
+        const url = result.secure_url;
+
+        try {
+          const dbResult = await pool.query(
+            'INSERT INTO photos(url, caption, created_at) VALUES ($1, $2, NOW()) RETURNING *',
+            [url, caption]
+          );
+          res.json(dbResult.rows[0]);
+        } catch (dbErr) {
+          console.error('DB error:', dbErr);
+          res.status(500).json({ error: 'Database error: ' + dbErr.message });
+        }
+      }
     );
-    res.json(result.rows[0]);
+
+    streamifier.createReadStream(req.file.buffer).pipe(uploadStream);
   } catch (err) {
     console.error('Upload error:', err);
     res.status(500).json({ error: err.message });
@@ -153,8 +158,10 @@ app.delete('/api/photos/:id', async (req, res) => {
     
     // Видали з Cloudinary
     try {
-      const publicId = photo.url.split('/').pop().split('.')[0];
-      await cloudinary.uploader.destroy(`karinka-photos/${publicId}`);
+      const urlParts = photo.url.split('/');
+      const filename = urlParts[urlParts.length - 1];
+      const publicId = `karinka-photos/${filename.split('.')[0]}`;
+      await cloudinary.uploader.destroy(publicId);
     } catch (e) {
       console.error('Error deleting from Cloudinary:', e);
     }
