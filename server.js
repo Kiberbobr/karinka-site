@@ -108,9 +108,26 @@ app.get('/api/photos', async (req, res) => {
 
 app.post('/api/photos/upload', upload.single('photo'), async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ error: 'Файл не завантажено' });
+    console.log('File received:', req.file);
+    
+    if (!req.file) {
+      console.error('No file uploaded');
+      return res.status(400).json({ error: 'Файл не завантажено' });
+    }
+    
     const caption = req.body.caption || '';
-    const url = req.file.secure_url; // Cloudinary URL
+    const url = req.file.secure_url;
+    
+    console.log('File info:', {
+      filename: req.file.filename,
+      secure_url: req.file.secure_url,
+      path: req.file.path
+    });
+
+    if (!url) {
+      console.error('secure_url is null! File object:', req.file);
+      return res.status(400).json({ error: 'Cloudinary upload failed - no URL' });
+    }
 
     const result = await pool.query(
       'INSERT INTO photos(url, caption, created_at) VALUES ($1, $2, NOW()) RETURNING *',
@@ -118,6 +135,7 @@ app.post('/api/photos/upload', upload.single('photo'), async (req, res) => {
     );
     res.json(result.rows[0]);
   } catch (err) {
+    console.error('Upload error:', err);
     res.status(500).json({ error: err.message });
   }
 });
