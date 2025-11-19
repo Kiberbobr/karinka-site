@@ -28,6 +28,57 @@ const pool = new Pool({
   port: process.env.DB_PORT
 });
 
+// ===== ІНІЦІАЛІЗАЦІЯ ТАБЛИЦЬ =====
+async function initDB() {
+  try {
+    // Таблиця photos
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS photos (
+        id SERIAL PRIMARY KEY,
+        url TEXT NOT NULL,
+        caption TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    // Таблиця notes
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS notes (
+        id SERIAL PRIMARY KEY,
+        text TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    // Таблиця anime
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS anime (
+        id SERIAL PRIMARY KEY,
+        title TEXT NOT NULL,
+        rating NUMERIC(3,1) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    // Таблиця dates
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS dates (
+        id SERIAL PRIMARY KEY,
+        date DATE NOT NULL,
+        description TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    console.log('All tables initialized');
+  } catch (err) {
+    console.error('Failed to initialize tables:', err);
+  }
+}
+
+// Викликаємо одразу
+initDB();
+
 // MULTER
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
