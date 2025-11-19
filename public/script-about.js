@@ -23,7 +23,7 @@ async function loadPhotos() {
         photos.forEach(p => {
             const card = document.createElement('div');
             card.className = 'photo-card';
-            const imgUrl = p.url.startsWith('/') ? p.url : '/' + p.url;
+            const imgUrl = p.url;
             
             const img = document.createElement('img');
             img.src = imgUrl;
