@@ -21,6 +21,11 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+console.log('Cloudinary Config:');
+console.log('Cloud Name:', process.env.CLOUDINARY_CLOUD_NAME);
+console.log('API Key:', process.env.CLOUDINARY_API_KEY ? 'SET' : 'MISSING');
+console.log('API Secret:', process.env.CLOUDINARY_API_SECRET ? 'SET' : 'MISSING');
+
 // Підключення до PostgreSQL
 const pool = new Pool({
   user: process.env.DB_USER,
