@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Наша вулиця 💘</title>
+  <link rel="stylesheet" href="style-about.css">
+</head>
+<body>
+  <div class="tabs">
+    <div class="tab-buttons">
+      <button class="tab-btn active" data-tab="album">Альбом</button>
+      <button class="tab-btn" data-tab="moments">Спогади</button>
+      <button class="tab-btn" data-tab="set-a-date">Побачення</button>
+      <button class="tab-btn" data-tab="watched-anime">Аніме</button>
+      <button class="tab-btn" data-tab="other">Інше</button>
+    </div>
+
+    <!-- Альбом -->
+    <div class="tab-content active" id="album">
+      <h2>📸 Альбом</h2>
+      <form id="upload-photo-form" enctype="multipart/form-data">
+        <input type="file" id="photo-file" accept="image/*" required>
+        <input type="text" id="photo-caption" placeholder="Підпис до фото">
+        <button type="submit">Завантажити фото</button>
+      </form>
+      <div class="photo-grid"></div>
+    </div>
+
+    <!-- Спогади -->
+    <div class="tab-content" id="moments">
+      <h2>💭 Спогади</h2>
+      <form id="note-form">
+        <input type="text" id="note-text" placeholder="Нова нотатка" required>
+        <button type="submit">Додати нотатку</button>
+      </form>
+      <div id="notes-list"></div>
+    </div>
+
+    <!-- Побачення -->
+    <div class="tab-content" id="set-a-date">
+      <h2>📅 Вибери дату для побачення!</h2>
+      <form id="date-form">
+        <input type="date" id="date-input" required>
+        <input type="text" id="date-description" placeholder="Опис (необов'язково)">
+        <button type="submit">Додати дату</button>
+      </form>
+      <div id="dates-list"></div>
+    </div>
+
+    <!-- Аніме -->
+    <div class="tab-content" id="watched-anime">
+      <h2>🎌 Наші переглянуті аніме</h2>
+      <form id="anime-form">
+        <input type="text" id="anime-title" placeholder="Назва аніме" required>
+        <input type="number" id="anime-rating" placeholder="Оцінка (0-10)" min="0" max="10" step="0.1">
+        <button type="submit">Додати аніме</button>
+      </form>
+      <div id="anime-list"></div>
+    </div>
+
+    <!-- Інше -->
+    <div class="tab-content" id="other">
+      <h2>✨ Інше</h2>
+      <p>Тут можна додати що-небудь ще спеціальне для вас двох! 💖</p>
+    </div>
+  </div>
+
+  <script src="script-about.js"></script>
+  <script src="hearts.js"></script>
+</body>
+</html>

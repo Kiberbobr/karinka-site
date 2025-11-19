@@ -1,0 +1,344 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%), 
+                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><pattern id="hearts" x="0" y="0" width="200" height="200" patternUnits="userSpaceOnUse"><text x="50" y="100" font-size="80" opacity="0.1" fill="white">💖</text><text x="120" y="150" font-size="60" opacity="0.08" fill="white">💕</text></pattern></defs><rect width="1000" height="1000" fill="url(%23hearts)"/></svg>');
+    background-attachment: fixed;
+    background-size: cover, auto;
+    min-height: 100vh;
+    padding: 20px;
+    position: relative;
+    overflow-x: hidden;
+}
+
+.tabs {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.tab-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.tab-btn {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 25px;
+    background: rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    color: white;
+    transition: all 0.3s ease;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.tab-btn:hover {
+    background: rgba(255, 255, 255, 0.35);
+    transform: translateY(-3px);
+}
+
+.tab-btn.active {
+    background: #ff1493;
+    box-shadow: 0 6px 20px rgba(255, 20, 147, 0.4);
+}
+
+.tab-content {
+    display: none;
+    padding: 30px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    animation: slideIn 0.5s ease;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Серця - падаючі з обертанням */
+.heart {
+    position: fixed;
+    font-size: 20px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+@keyframes fall1 {
+    0% {
+        transform: translateY(-100px) rotate(0deg);
+        opacity: 0.8;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+@keyframes fall2 {
+    0% {
+        transform: translateY(-100px) rotate(0deg);
+        opacity: 0.8;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotate(-360deg);
+        opacity: 0;
+    }
+}
+
+@keyframes fall3 {
+    0% {
+        transform: translateY(-100px) rotate(0deg) scale(1);
+        opacity: 0.8;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotate(720deg) scale(0.5);
+        opacity: 0;
+    }
+}
+
+@keyframes fall4 {
+    0% {
+        transform: translateY(-100px) rotate(0deg);
+        opacity: 0.8;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotate(-720deg);
+        opacity: 0;
+    }
+}
+
+.tab-content h2 {
+    margin-bottom: 20px;
+    color: #ff1493;
+    font-size: 24px;
+}
+
+.tab-content p {
+    color: #666;
+    margin-bottom: 15px;
+}
+
+/* Форми */
+form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+input[type="text"],
+input[type="date"],
+input[type="file"],
+input[type="number"] {
+    padding: 10px 15px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+input[type="text"]:focus,
+input[type="date"]:focus,
+input[type="file"]:focus,
+input[type="number"]:focus {
+    outline: none;
+    border-color: #ff1493;
+    box-shadow: 0 0 10px rgba(255, 20, 147, 0.2);
+}
+
+form button {
+    padding: 10px 20px;
+    background: #ff1493;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+form button:hover {
+    background: #ff69b4;
+    transform: translateY(-2px);
+}
+
+/* Фото */
+.photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.photo-card {
+    background: rgba(255, 255, 255, 0.7);
+    padding: 10px;
+    border-radius: 12px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+}
+
+.photo-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.photo-card img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.photo-card p {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #333;
+}
+
+.delete-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(255, 20, 147, 0.8);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.delete-btn:hover {
+    background: #ff1493;
+}
+
+/* Списки */
+#notes-list ul,
+#anime-list ul,
+#dates-list ul {
+    list-style: none;
+}
+
+#notes-list li,
+#anime-list li,
+#dates-list li {
+    background: rgba(255, 20, 147, 0.1);
+    margin: 10px 0;
+    padding: 12px 15px;
+    border-radius: 8px;
+    border-left: 4px solid #ff1493;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+#notes-list li span,
+#anime-list li span,
+#dates-list li span {
+    color: #333;
+    flex: 1;
+}
+
+.delete-note-btn,
+.delete-btn-small {
+    background: none;
+    border: none;
+    color: #ff1493;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s;
+    padding: 5px 10px;
+}
+
+.delete-note-btn:hover,
+.delete-btn-small:hover {
+    color: #ff0080;
+    transform: scale(1.3);
+}
+
+#notes-list p,
+#anime-list p,
+#dates-list p {
+    color: #999;
+    text-align: center;
+    font-style: italic;
+}
+
+/* Адаптивність */
+@media (max-width: 768px) {
+    .tab-buttons {
+        flex-direction: column;
+    }
+
+    .tab-btn {
+        width: 100%;
+    }
+
+    .tab-content {
+        padding: 20px;
+    }
+
+    form {
+        flex-direction: column;
+    }
+
+    form input,
+    form button {
+        width: 100%;
+    }
+
+    .photo-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    }
+}

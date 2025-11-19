@@ -1,0 +1,218 @@
+require('dotenv').config();
+const express = require('express');
+const { Pool } = require('pg');
+const path = require('path');
+const cors = require('cors');
+const multer = require('multer');
+const fs = require('fs');
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// Переконуємося, що папка для фото існує
+const imagesDir = path.join(__dirname, 'public', 'images');
+if (!fs.existsSync(imagesDir)) {
+  fs.mkdirSync(imagesDir, { recursive: true });
+}
+
+// Статика
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Підключення до PostgreSQL
+const pool = new Pool({
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASSWORD,
+  port: process.env.DB_PORT
+});
+
+// MULTER
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, imagesDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname);
+    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+  }
+});
+const upload = multer({ storage });
+
+// ===== ФОТО =====
+app.get('/api/photos', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM photos ORDER BY id DESC');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/photos/upload', upload.single('photo'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'Файл не завантажено' });
+    const caption = req.body.caption || '';
+    const url = '/images/' + req.file.filename;
+
+    const result = await pool.query(
+      'INSERT INTO photos(url, caption, created_at) VALUES ($1, $2, NOW()) RETURNING *',
+      [url, caption]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/photos/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const photoResult = await pool.query('SELECT * FROM photos WHERE id = $1', [id]);
+    
+    if (photoResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Фото не знайдено' });
+    }
+
+    const photo = photoResult.rows[0];
+    const filePath = path.join(__dirname, 'public', photo.url);
+    
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+
+    await pool.query('DELETE FROM photos WHERE id = $1', [id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== НОТАТКИ =====
+app.get('/api/notes', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM notes ORDER BY created_at DESC');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/notes', async (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text || text.trim() === '') {
+      return res.status(400).json({ error: 'Текст нотатки не може бути порожнім' });
+    }
+    const result = await pool.query(
+      'INSERT INTO notes(text, created_at) VALUES($1, NOW()) RETURNING *',
+      [text.trim()]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/notes/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query('DELETE FROM notes WHERE id = $1 RETURNING *', [id]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Нотатка не знайдена' });
+    }
+    
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== АНІМЕ =====
+app.get('/api/anime', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM anime ORDER BY id DESC');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/anime', async (req, res) => {
+  try {
+    const { title, rating } = req.body;
+    if (!title) {
+      return res.status(400).json({ error: 'Назва аніме обов\'язкова' });
+    }
+    const rate = Math.min(10, Math.max(0, parseFloat(rating) || 0));
+    const result = await pool.query(
+      'INSERT INTO anime(title, rating, created_at) VALUES($1, $2, NOW()) RETURNING *',
+      [title.trim(), rate]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/anime/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query('DELETE FROM anime WHERE id = $1 RETURNING *', [id]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Аніме не знайдено' });
+    }
+    
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== ПОБАЧЕННЯ =====
+app.get('/api/dates', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM dates ORDER BY date ASC');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/dates', async (req, res) => {
+  try {
+    const { date, description } = req.body;
+    if (!date) {
+      return res.status(400).json({ error: 'Дата обов\'язкова' });
+    }
+    const result = await pool.query(
+      'INSERT INTO dates(date, description, created_at) VALUES($1, $2, NOW()) RETURNING *',
+      [date, description || '']
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/dates/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query('DELETE FROM dates WHERE id = $1 RETURNING *', [id]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Дата не знайдена' });
+    }
+    
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server listening on http://localhost:${PORT}`));
