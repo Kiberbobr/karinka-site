@@ -4,20 +4,22 @@ const { Pool } = require('pg');
 const path = require('path');
 const cors = require('cors');
 const multer = require('multer');
-const fs = require('fs');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Переконуємося, що папка для фото існує
-const imagesDir = path.join(__dirname, 'public', 'images');
-if (!fs.existsSync(imagesDir)) {
-  fs.mkdirSync(imagesDir, { recursive: true });
-}
-
 // Статика
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Підключення Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 // Підключення до PostgreSQL
 const pool = new Pool({
@@ -79,15 +81,12 @@ async function initDB() {
 // Викликаємо одразу
 initDB();
 
-// MULTER
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, imagesDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+// MULTER з CLOUDINARY
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'karinka-photos',
+    resource_type: 'auto'
   }
 });
 const upload = multer({ storage });
@@ -106,7 +105,7 @@ app.post('/api/photos/upload', upload.single('photo'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Файл не завантажено' });
     const caption = req.body.caption || '';
-    const url = '/images/' + req.file.filename;
+    const url = req.file.secure_url; // Cloudinary URL
 
     const result = await pool.query(
       'INSERT INTO photos(url, caption, created_at) VALUES ($1, $2, NOW()) RETURNING *',
@@ -128,10 +127,13 @@ app.delete('/api/photos/:id', async (req, res) => {
     }
 
     const photo = photoResult.rows[0];
-    const filePath = path.join(__dirname, 'public', photo.url);
     
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    // Видали з Cloudinary
+    try {
+      const publicId = photo.url.split('/').pop().split('.')[0];
+      await cloudinary.uploader.destroy(`karinka-photos/${publicId}`);
+    } catch (e) {
+      console.error('Error deleting from Cloudinary:', e);
     }
 
     await pool.query('DELETE FROM photos WHERE id = $1', [id]);
