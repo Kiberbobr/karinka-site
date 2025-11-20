@@ -1,0 +1,20 @@
+{
+    "sqltools.connections": [
+        {
+            "pgOptions": {
+                "ssl": {
+                    "rejectUnauthorized": true
+                }
+            },
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "dpg-d4et64f5r7bs73806oag-a.oregon-postgres.render.com",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "Render Karinka DB",
+            "database": "karinka_db",
+            "username": "karinka_db_user",
+            "password": "G6NY1nxJW2uX2Kqb5fHo636l3jIIYImj"
+        }
+    ]
+}

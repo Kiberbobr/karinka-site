@@ -11,8 +11,9 @@
     <div class="tab-buttons">
       <button class="tab-btn active" data-tab="album">Альбом</button>
       <button class="tab-btn" data-tab="moments">Спогади</button>
-      <button class="tab-btn" data-tab="set-a-date">Побачення</button>
-      <button class="tab-btn" data-tab="watched-anime">Аніме</button>
+      <button class="tab-btn" data-tab="anime">Аніме</button>
+      <button class="tab-btn" data-tab="movies">Фільми/Серіали</button>
+      <button class="tab-btn" data-tab="dates">Побачення</button>
       <button class="tab-btn" data-tab="other">Інше</button>
     </div>
 
@@ -37,8 +38,82 @@
       <div id="notes-list"></div>
     </div>
 
+    <!-- Аніме -->
+    <div class="tab-content" id="anime">
+      <h2>🎌 Наші переглянуті аніме</h2>
+      
+      <div class="controls-panel">
+        <input type="text" id="anime-search" placeholder="Пошук по назві..." class="search-input">
+        <select id="anime-sort" class="sort-select">
+          <option value="date">Дата додавання</option>
+          <option value="title">За назвою</option>
+          <option value="rating">За оцінкою</option>
+        </select>
+        <select id="anime-order" class="sort-select">
+          <option value="desc">Спадаючий</option>
+          <option value="asc">Зростаючий</option>
+        </select>
+      </div>
+
+      <form id="anime-form">
+        <h3 id="anime-form-title">Додати нове аніме</h3>
+        <input type="text" id="anime-title" placeholder="Назва аніме" required>
+        <input type="number" id="anime-rating" placeholder="Оцінка (0-10)" min="0" max="10" step="0.1">
+        <input type="number" id="anime-episodes" placeholder="Кількість епізодів" min="0">
+        <select id="anime-status">
+          <option value="ongoing">🔄 Триває</option>
+          <option value="completed">✓ Завершено</option>
+        </select>
+        <input type="file" id="anime-poster" accept="image/*" placeholder="Постер (опціонально)">
+        <button type="submit" id="anime-btn-submit">Додати</button>
+        <button type="button" id="anime-btn-cancel" style="display:none;">Скасувати</button>
+      </form>
+      <div id="anime-list"></div>
+    </div>
+
+    <!-- Фільми/Серіали -->
+    <div class="tab-content" id="movies">
+      <h2>🎬 Переглянуті фільми й серіали</h2>
+      
+      <div class="controls-panel">
+        <input type="text" id="movie-search" placeholder="Пошук по назві..." class="search-input">
+        <select id="movie-type-filter" class="sort-select">
+          <option value="all">Усі</option>
+          <option value="movie">🎬 Фільми</option>
+          <option value="series">📺 Серіали</option>
+        </select>
+        <select id="movie-sort" class="sort-select">
+          <option value="date">Дата додавання</option>
+          <option value="title">За назвою</option>
+          <option value="rating">За оцінкою</option>
+          <option value="year">За роком</option>
+        </select>
+        <select id="movie-order" class="sort-select">
+          <option value="desc">Спадаючий</option>
+          <option value="asc">Зростаючий</option>
+        </select>
+      </div>
+
+      <form id="movie-form">
+        <h3 id="movie-form-title">Додати новий фільм/серіал</h3>
+        <input type="text" id="movie-title" placeholder="Назва" required>
+        <select id="movie-type" required>
+          <option value="">Виберіть тип</option>
+          <option value="movie">🎬 Фільм</option>
+          <option value="series">📺 Серіал</option>
+        </select>
+        <input type="number" id="movie-rating" placeholder="Оцінка (0-10)" min="0" max="10" step="0.1">
+        <input type="number" id="movie-year" placeholder="Рік випуску">
+        <textarea id="movie-desc" placeholder="Опис (опціонально)" style="width:100%; min-height:80px; padding:10px; border-radius:8px; border:2px solid #ddd;"></textarea>
+        <input type="file" id="movie-poster" accept="image/*" placeholder="Постер (опціонально)">
+        <button type="submit" id="movie-btn-submit">Додати</button>
+        <button type="button" id="movie-btn-cancel" style="display:none;">Скасувати</button>
+      </form>
+      <div id="movies-list"></div>
+    </div>
+
     <!-- Побачення -->
-    <div class="tab-content" id="set-a-date">
+    <div class="tab-content" id="dates">
       <h2>📅 Вибери дату для побачення!</h2>
       <form id="date-form">
         <input type="date" id="date-input" required>
@@ -46,17 +121,6 @@
         <button type="submit">Додати дату</button>
       </form>
       <div id="dates-list"></div>
-    </div>
-
-    <!-- Аніме -->
-    <div class="tab-content" id="watched-anime">
-      <h2>🎌 Наші переглянуті аніме</h2>
-      <form id="anime-form">
-        <input type="text" id="anime-title" placeholder="Назва аніме" required>
-        <input type="number" id="anime-rating" placeholder="Оцінка (0-10)" min="0" max="10" step="0.1">
-        <button type="submit">Додати аніме</button>
-      </form>
-      <div id="anime-list"></div>
     </div>
 
     <!-- Інше -->

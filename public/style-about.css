@@ -17,7 +17,7 @@ body {
 }
 
 .tabs {
-    max-width: 900px;
+    max-width: 1000px;
     margin: 0 auto;
 }
 
@@ -77,68 +77,11 @@ body {
     }
 }
 
-/* Серця - падаючі з обертанням */
 .heart {
     position: fixed;
     font-size: 20px;
     pointer-events: none;
     z-index: 1;
-}
-
-@keyframes fall1 {
-    0% {
-        transform: translateY(-100px) rotate(0deg);
-        opacity: 0.8;
-    }
-    50% {
-        opacity: 1;
-    }
-    100% {
-        transform: translateY(100vh) rotate(360deg);
-        opacity: 0;
-    }
-}
-
-@keyframes fall2 {
-    0% {
-        transform: translateY(-100px) rotate(0deg);
-        opacity: 0.8;
-    }
-    50% {
-        opacity: 1;
-    }
-    100% {
-        transform: translateY(100vh) rotate(-360deg);
-        opacity: 0;
-    }
-}
-
-@keyframes fall3 {
-    0% {
-        transform: translateY(-100px) rotate(0deg) scale(1);
-        opacity: 0.8;
-    }
-    50% {
-        opacity: 1;
-    }
-    100% {
-        transform: translateY(100vh) rotate(720deg) scale(0.5);
-        opacity: 0;
-    }
-}
-
-@keyframes fall4 {
-    0% {
-        transform: translateY(-100px) rotate(0deg);
-        opacity: 0.8;
-    }
-    50% {
-        opacity: 1;
-    }
-    100% {
-        transform: translateY(100vh) rotate(-720deg);
-        opacity: 0;
-    }
 }
 
 .tab-content h2 {
@@ -147,9 +90,40 @@ body {
     font-size: 24px;
 }
 
+.tab-content h3 {
+    color: #ff1493;
+    font-size: 18px;
+    margin-bottom: 15px;
+}
+
 .tab-content p {
     color: #666;
     margin-bottom: 15px;
+}
+
+/* Контрольна панель для сортування */
+.controls-panel {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.search-input,
+.sort-select {
+    padding: 10px 15px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.search-input:focus,
+.sort-select:focus {
+    outline: none;
+    border-color: #ff1493;
+    box-shadow: 0 0 10px rgba(255, 20, 147, 0.2);
 }
 
 /* Форми */
@@ -159,23 +133,35 @@ form {
     margin-bottom: 25px;
     flex-wrap: wrap;
     justify-content: center;
+    flex-direction: column;
+    align-items: center;
+}
+
+form > * {
+    width: 100%;
+    max-width: 500px;
 }
 
 input[type="text"],
 input[type="date"],
 input[type="file"],
-input[type="number"] {
+input[type="number"],
+select,
+textarea {
     padding: 10px 15px;
     border: 2px solid #ddd;
     border-radius: 8px;
     font-size: 14px;
     transition: all 0.3s;
+    font-family: 'Arial', sans-serif;
 }
 
 input[type="text"]:focus,
 input[type="date"]:focus,
 input[type="file"]:focus,
-input[type="number"]:focus {
+input[type="number"]:focus,
+select:focus,
+textarea:focus {
     outline: none;
     border-color: #ff1493;
     box-shadow: 0 0 10px rgba(255, 20, 147, 0.2);
@@ -190,6 +176,8 @@ form button {
     cursor: pointer;
     font-weight: bold;
     transition: all 0.3s;
+    width: auto;
+    align-self: center;
 }
 
 form button:hover {
@@ -254,12 +242,12 @@ form button:hover {
 /* Списки */
 #notes-list ul,
 #anime-list ul,
+#movies-list ul,
 #dates-list ul {
     list-style: none;
 }
 
 #notes-list li,
-#anime-list li,
 #dates-list li {
     background: rgba(255, 20, 147, 0.1);
     margin: 10px 0;
@@ -270,6 +258,20 @@ form button:hover {
     justify-content: space-between;
     align-items: center;
     animation: fadeIn 0.3s ease;
+}
+
+.note-number,
+.date-number {
+    font-weight: bold;
+    color: #ff1493;
+    margin-right: 10px;
+    min-width: 25px;
+}
+
+#notes-list li span:nth-child(2),
+#dates-list li span:nth-child(2) {
+    color: #333;
+    flex: 1;
 }
 
 @keyframes fadeIn {
@@ -283,15 +285,9 @@ form button:hover {
     }
 }
 
-#notes-list li span,
-#anime-list li span,
-#dates-list li span {
-    color: #333;
-    flex: 1;
-}
-
 .delete-note-btn,
-.delete-btn-small {
+.delete-btn-small,
+.edit-btn-small {
     background: none;
     border: none;
     color: #ff1493;
@@ -302,17 +298,78 @@ form button:hover {
 }
 
 .delete-note-btn:hover,
-.delete-btn-small:hover {
+.delete-btn-small:hover,
+.edit-btn-small:hover {
     color: #ff0080;
     transform: scale(1.3);
 }
 
+/* Аніме елементи */
+.anime-item,
+.movie-item {
+    background: rgba(255, 20, 147, 0.1);
+    margin: 15px 0;
+    padding: 12px;
+    border-radius: 8px;
+    border-left: 4px solid #ff1493;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    animation: fadeIn 0.3s ease;
+}
+
+.anime-poster,
+.movie-poster {
+    width: 60px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 6px;
+    flex-shrink: 0;
+    background: #f0f0f0;
+}
+
+.anime-info,
+.movie-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.anime-title,
+.movie-title {
+    font-weight: bold;
+    color: #333;
+    font-size: 14px;
+}
+
+.anime-rating,
+.anime-episodes,
+.anime-status,
+.movie-type,
+.movie-rating,
+.movie-year,
+.movie-desc {
+    font-size: 13px;
+    color: #666;
+}
+
+.anime-buttons,
+.movie-buttons {
+    display: flex;
+    gap: 8px;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
 #notes-list p,
 #anime-list p,
+#movies-list p,
 #dates-list p {
     color: #999;
     text-align: center;
     font-style: italic;
+    margin: 20px 0;
 }
 
 /* Адаптивність */
@@ -329,16 +386,33 @@ form button:hover {
         padding: 20px;
     }
 
-    form {
+    .controls-panel {
         flex-direction: column;
     }
 
-    form input,
-    form button {
+    .search-input,
+    .sort-select {
         width: 100%;
+    }
+
+    form > * {
+        width: 100%;
+        max-width: none;
     }
 
     .photo-grid {
         grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    }
+
+    .anime-item,
+    .movie-item {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .anime-buttons,
+    .movie-buttons {
+        flex-direction: row;
     }
 }
