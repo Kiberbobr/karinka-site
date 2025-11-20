@@ -19,6 +19,11 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+console.log('Cloudinary Config:');
+console.log('Cloud Name:', process.env.CLOUDINARY_CLOUD_NAME);
+console.log('API Key:', process.env.CLOUDINARY_API_KEY ? 'SET' : 'MISSING');
+console.log('API Secret:', process.env.CLOUDINARY_API_SECRET ? 'SET' : 'MISSING');
+
 // Database connection
 const pool = new Pool({
   user: process.env.DB_USER,
@@ -31,6 +36,8 @@ const pool = new Pool({
 // Initialize DB
 async function initDB() {
   try {
+    console.log('Initializing database...');
+
     await pool.query(`
       CREATE TABLE IF NOT EXISTS photos (
         id SERIAL PRIMARY KEY,
@@ -92,6 +99,20 @@ initDB();
 
 const upload = multer({ storage: multer.memoryStorage() });
 
+// Helper function for uploading to Cloudinary
+async function uploadToCloudinary(buffer, folder) {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { folder: folder, resource_type: 'auto' },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result.secure_url);
+      }
+    );
+    streamifier.createReadStream(buffer).pipe(uploadStream);
+  });
+}
+
 // ===== ФОТО =====
 app.get('/api/photos', async (req, res) => {
   try {
@@ -105,31 +126,29 @@ app.get('/api/photos', async (req, res) => {
 app.post('/api/photos/upload', upload.single('photo'), async (req, res) => {
   try {
     if (!req.file) {
+      console.error('No file uploaded');
       return res.status(400).json({ error: 'Файл не завантажено' });
     }
 
-    const uploadStream = cloudinary.uploader.upload_stream(
-      { folder: 'karinka-photos', resource_type: 'auto' },
-      async (error, result) => {
-        if (error) {
-          return res.status(500).json({ error: 'Cloudinary error: ' + error.message });
-        }
+    console.log('Uploading photo to Cloudinary...');
 
-        const caption = req.body.caption || '';
-        try {
-          const dbResult = await pool.query(
-            'INSERT INTO photos(url, caption, created_at) VALUES ($1, $2, NOW()) RETURNING *',
-            [result.secure_url, caption]
-          );
-          res.json(dbResult.rows[0]);
-        } catch (dbErr) {
-          res.status(500).json({ error: 'DB error: ' + dbErr.message });
-        }
-      }
-    );
+    const url = await uploadToCloudinary(req.file.buffer, 'karinka-photos');
+    console.log('Cloudinary upload success:', url);
 
-    streamifier.createReadStream(req.file.buffer).pipe(uploadStream);
+    const caption = req.body.caption || '';
+
+    try {
+      const dbResult = await pool.query(
+        'INSERT INTO photos(url, caption, created_at) VALUES ($1, $2, NOW()) RETURNING *',
+        [url, caption]
+      );
+      res.json(dbResult.rows[0]);
+    } catch (dbErr) {
+      console.error('DB error:', dbErr);
+      res.status(500).json({ error: 'Database error: ' + dbErr.message });
+    }
   } catch (err) {
+    console.error('Upload error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -144,13 +163,14 @@ app.delete('/api/photos/:id', async (req, res) => {
     }
 
     const photo = photoResult.rows[0];
+
     try {
       const urlParts = photo.url.split('/');
       const filename = urlParts[urlParts.length - 1];
       const publicId = `karinka-photos/${filename.split('.')[0]}`;
       await cloudinary.uploader.destroy(publicId);
     } catch (e) {
-      console.error('Cloudinary delete error:', e);
+      console.error('Error deleting from Cloudinary:', e);
     }
 
     await pool.query('DELETE FROM photos WHERE id = $1', [id]);
@@ -232,14 +252,13 @@ app.post('/api/anime', upload.single('poster'), async (req, res) => {
 
     let posterUrl = null;
     if (req.file) {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        { folder: 'karinka-anime-posters', resource_type: 'auto' },
-        (error, result) => {
-          if (!error) posterUrl = result.secure_url;
-        }
-      );
-      streamifier.createReadStream(req.file.buffer).pipe(uploadStream);
-      await new Promise(resolve => uploadStream.on('finish', resolve));
+      try {
+        console.log('Uploading anime poster...');
+        posterUrl = await uploadToCloudinary(req.file.buffer, 'karinka-anime-posters');
+        console.log('Anime poster uploaded:', posterUrl);
+      } catch (cloudErr) {
+        console.error('Cloudinary anime poster error:', cloudErr);
+      }
     }
 
     const rate = Math.min(10, Math.max(0, parseFloat(rating) || 0));
@@ -249,6 +268,7 @@ app.post('/api/anime', upload.single('poster'), async (req, res) => {
     );
     res.json(result.rows[0]);
   } catch (err) {
+    console.error('Anime POST error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -260,14 +280,13 @@ app.put('/api/anime/:id', upload.single('poster'), async (req, res) => {
 
     let posterUrl = null;
     if (req.file) {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        { folder: 'karinka-anime-posters', resource_type: 'auto' },
-        (error, result) => {
-          if (!error) posterUrl = result.secure_url;
-        }
-      );
-      streamifier.createReadStream(req.file.buffer).pipe(uploadStream);
-      await new Promise(resolve => uploadStream.on('finish', resolve));
+      try {
+        console.log('Uploading anime poster for update...');
+        posterUrl = await uploadToCloudinary(req.file.buffer, 'karinka-anime-posters');
+        console.log('Anime poster updated:', posterUrl);
+      } catch (cloudErr) {
+        console.error('Cloudinary anime poster error:', cloudErr);
+      }
     }
 
     const rate = Math.min(10, Math.max(0, parseFloat(rating) || 0));
@@ -287,6 +306,7 @@ app.put('/api/anime/:id', upload.single('poster'), async (req, res) => {
 
     res.json(result.rows[0]);
   } catch (err) {
+    console.error('Anime PUT error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -345,14 +365,13 @@ app.post('/api/movies', upload.single('poster'), async (req, res) => {
 
     let posterUrl = null;
     if (req.file) {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        { folder: 'karinka-movie-posters', resource_type: 'auto' },
-        (error, result) => {
-          if (!error) posterUrl = result.secure_url;
-        }
-      );
-      streamifier.createReadStream(req.file.buffer).pipe(uploadStream);
-      await new Promise(resolve => uploadStream.on('finish', resolve));
+      try {
+        console.log('Uploading movie poster...');
+        posterUrl = await uploadToCloudinary(req.file.buffer, 'karinka-movie-posters');
+        console.log('Movie poster uploaded:', posterUrl);
+      } catch (cloudErr) {
+        console.error('Cloudinary movie poster error:', cloudErr);
+      }
     }
 
     const rate = Math.min(10, Math.max(0, parseFloat(rating) || 0));
@@ -362,6 +381,7 @@ app.post('/api/movies', upload.single('poster'), async (req, res) => {
     );
     res.json(result.rows[0]);
   } catch (err) {
+    console.error('Movies POST error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -373,14 +393,13 @@ app.put('/api/movies/:id', upload.single('poster'), async (req, res) => {
 
     let posterUrl = null;
     if (req.file) {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        { folder: 'karinka-movie-posters', resource_type: 'auto' },
-        (error, result) => {
-          if (!error) posterUrl = result.secure_url;
-        }
-      );
-      streamifier.createReadStream(req.file.buffer).pipe(uploadStream);
-      await new Promise(resolve => uploadStream.on('finish', resolve));
+      try {
+        console.log('Uploading movie poster for update...');
+        posterUrl = await uploadToCloudinary(req.file.buffer, 'karinka-movie-posters');
+        console.log('Movie poster updated:', posterUrl);
+      } catch (cloudErr) {
+        console.error('Cloudinary movie poster error:', cloudErr);
+      }
     }
 
     const rate = Math.min(10, Math.max(0, parseFloat(rating) || 0));
@@ -400,6 +419,7 @@ app.put('/api/movies/:id', upload.single('poster'), async (req, res) => {
 
     res.json(result.rows[0]);
   } catch (err) {
+    console.error('Movies PUT error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -461,4 +481,4 @@ app.delete('/api/dates/:id', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`Server listening on http://localhost:${PORT}`));
